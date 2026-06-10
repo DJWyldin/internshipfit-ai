@@ -77,19 +77,46 @@ export default function Home() {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<
     "overview" | "resume" | "cover" | "interview" | "plan"
   >("overview");
   const [copied, setCopied] = useState(false);
+  const [fileName, setFileName] = useState("");
 
-  // Read uploaded .txt / .pdf (text-based) file as plain text
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const text = await file.text();
-    setResumeText(text);
+
+    setFileLoading(true);
+    setFileName(file.name);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/parse-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to read file.");
+        setFileName("");
+      } else {
+        setResumeText(data.text);
+      }
+    } catch {
+      setError("Failed to read file. Try pasting your resume text instead.");
+      setFileName("");
+    } finally {
+      setFileLoading(false);
+    }
   };
 
   const handleAnalyze = async () => {
@@ -176,21 +203,37 @@ export default function Home() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-medium w-fit">
                 <span className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 hover:bg-blue-100 transition-colors">
-                  📄 Upload file (.txt, .pdf)
+                  {fileLoading ? "Reading file..." : fileName ? `✓ ${fileName}` : "📄 Upload PDF, DOCX, or TXT"}
                 </span>
                 <input
                   type="file"
-                  accept=".txt,.pdf"
+                  accept=".txt,.pdf,.doc,.docx"
                   className="hidden"
                   onChange={handleFileChange}
+                  disabled={fileLoading}
                 />
               </label>
-              <textarea
-                value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
-                placeholder="…or paste your resume text here"
-                className="w-full border border-gray-200 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-300"
-              />
+              {!fileName && (
+                <textarea
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="…or paste your resume text here"
+                  className="w-full border border-gray-200 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-300"
+                />
+              )}
+              {fileName && resumeText && (
+                <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                  <span className="text-sm text-green-700">
+                    ✓ Resume loaded — {resumeText.split(" ").length} words extracted
+                  </span>
+                  <button
+                    onClick={() => { setFileName(""); setResumeText(""); }}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -214,7 +257,7 @@ export default function Home() {
 
           <button
             onClick={handleAnalyze}
-            disabled={loading}
+            disabled={loading || fileLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition-colors text-base"
           >
             {loading ? "Analyzing…" : "Analyze My Application →"}
