@@ -38,8 +38,6 @@ function scoreBg(score: number): string {
   return "bg-red-50 border-red-200";
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
 function Section({
   title,
   icon,
@@ -68,6 +66,77 @@ function Tag({ label, variant }: { label: string; variant: "blue" | "red" }) {
     <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${cls}`}>
       {label}
     </span>
+  );
+}
+
+// ── Email Capture Component ───────────────────────────────────────────────────
+
+function EmailCapture() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSubmit = async () => {
+    if (!email.trim()) return;
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Something went wrong.");
+        setStatus("error");
+      } else {
+        setStatus("success");
+      }
+    } catch {
+      setErrorMsg("Something went wrong. Please try again.");
+      setStatus("error");
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+        <div className="text-2xl mb-2">🎉</div>
+        <p className="text-green-700 font-semibold text-sm">You're on the list!</p>
+        <p className="text-green-600 text-xs mt-1">We'll notify you when new features launch.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+      <h3 className="text-sm font-bold text-blue-900 mb-1">Stay in the loop 📬</h3>
+      <p className="text-xs text-blue-700 mb-4">
+        Get notified when we launch AI internship search, application tracking, and more.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          placeholder="your@email.com"
+          className="flex-1 border border-blue-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={status === "loading"}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+        >
+          {status === "loading" ? "..." : "Notify me"}
+        </button>
+      </div>
+      {errorMsg && (
+        <p className="text-red-500 text-xs mt-2">{errorMsg}</p>
+      )}
+    </div>
   );
 }
 
@@ -163,7 +232,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
-      {/* ── Header ── */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
@@ -180,7 +248,6 @@ export default function Home() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-        {/* ── Hero ── */}
         {!result && (
           <div className="text-center space-y-2 pb-2">
             <h1 className="text-3xl font-bold text-gray-900">
@@ -194,7 +261,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Input Card ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -264,7 +330,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* ── Loading ── */}
         {loading && (
           <div className="text-center py-12 space-y-3">
             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
@@ -274,13 +339,9 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Results ── */}
         {result && (
           <div className="space-y-6">
-            {/* Score Hero */}
-            <div
-              className={`rounded-2xl border-2 p-6 text-center ${scoreBg(result.matchScore)}`}
-            >
+            <div className={`rounded-2xl border-2 p-6 text-center ${scoreBg(result.matchScore)}`}>
               <div
                 className="text-6xl font-black mb-1"
                 style={{ color: scoreColor(result.matchScore) }}
@@ -299,7 +360,9 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Tabs */}
+            {/* Email Capture — shown right after score */}
+            <EmailCapture />
+
             <div className="flex overflow-x-auto gap-1 bg-gray-100 p-1 rounded-xl">
               {tabs.map((tab) => (
                 <button
@@ -316,7 +379,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* ── Tab: Overview ── */}
             {activeTab === "overview" && (
               <div className="space-y-4">
                 <Section title="Strengths" icon="✅">
@@ -329,7 +391,6 @@ export default function Home() {
                     ))}
                   </ul>
                 </Section>
-
                 <Section title="Weaknesses" icon="⚠️">
                   <ul className="space-y-2">
                     {result.weaknesses.map((w, i) => (
@@ -340,7 +401,6 @@ export default function Home() {
                     ))}
                   </ul>
                 </Section>
-
                 <Section title="Missing Keywords" icon="🔍">
                   <div className="flex flex-wrap gap-2">
                     {result.missingKeywords.map((kw, i) => (
@@ -351,15 +411,12 @@ export default function Home() {
               </div>
             )}
 
-            {/* ── Tab: Resume Tips ── */}
             {activeTab === "resume" && (
               <Section title="Resume Improvements" icon="📝">
                 <ol className="space-y-3">
                   {result.resumeImprovements.map((tip, i) => (
                     <li key={i} className="flex gap-3 text-sm text-gray-700">
-                      <span className="text-blue-500 font-bold flex-shrink-0">
-                        {i + 1}.
-                      </span>
+                      <span className="text-blue-500 font-bold flex-shrink-0">{i + 1}.</span>
                       {tip}
                     </li>
                   ))}
@@ -367,7 +424,6 @@ export default function Home() {
               </Section>
             )}
 
-            {/* ── Tab: Cover Letter ── */}
             {activeTab === "cover" && (
               <Section title="Tailored Cover Letter" icon="✉️">
                 <div className="space-y-3">
@@ -384,25 +440,19 @@ export default function Home() {
               </Section>
             )}
 
-            {/* ── Tab: Interview Prep ── */}
             {activeTab === "interview" && (
               <Section title="Likely Interview Questions" icon="🎤">
                 <div className="space-y-4">
                   {result.interviewQuestions.map((iq, i) => (
                     <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-1">
-                      <p className="text-sm font-semibold text-gray-800">
-                        Q{i + 1}: {iq.question}
-                      </p>
-                      <p className="text-xs text-gray-500 leading-relaxed">
-                        💡 {iq.tip}
-                      </p>
+                      <p className="text-sm font-semibold text-gray-800">Q{i + 1}: {iq.question}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">💡 {iq.tip}</p>
                     </div>
                   ))}
                 </div>
               </Section>
             )}
 
-            {/* ── Tab: Action Plan ── */}
             {activeTab === "plan" && (
               <Section title="Your Action Plan" icon="🚀">
                 <ol className="space-y-4">
@@ -418,12 +468,8 @@ export default function Home() {
               </Section>
             )}
 
-            {/* Re-analyze */}
             <button
-              onClick={() => {
-                setResult(null);
-                setError("");
-              }}
+              onClick={() => { setResult(null); setError(""); }}
               className="w-full text-sm text-gray-400 hover:text-gray-600 py-2 transition-colors"
             >
               ← Analyze a different application
@@ -431,7 +477,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Footer ── */}
         <footer className="text-center text-xs text-gray-300 pt-4 pb-8">
           InternshipFit AI · Built for college students · Beta
         </footer>
