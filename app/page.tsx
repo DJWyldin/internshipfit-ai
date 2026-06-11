@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,10 +33,10 @@ function scoreColor(score: number): string {
 }
 
 function scoreBg(score: number): string {
-  if (score >= 80) return "bg-green-50 border-green-200";
-  if (score >= 60) return "bg-amber-50 border-amber-200";
-  if (score >= 40) return "bg-orange-50 border-orange-200";
-  return "bg-red-50 border-red-200";
+  if (score >= 80) return "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800";
+  if (score >= 60) return "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800";
+  if (score >= 40) return "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800";
+  return "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800";
 }
 
 function Section({
@@ -48,8 +49,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6">
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-400 mb-4">
         {icon} {title}
       </h3>
       {children}
@@ -60,8 +61,8 @@ function Section({
 function Tag({ label, variant }: { label: string; variant: "blue" | "red" }) {
   const cls =
     variant === "blue"
-      ? "bg-blue-50 text-blue-700 border border-blue-100"
-      : "bg-red-50 text-red-600 border border-red-100";
+      ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
+      : "bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-800";
   return (
     <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${cls}`}>
       {label}
@@ -69,7 +70,7 @@ function Tag({ label, variant }: { label: string; variant: "blue" | "red" }) {
   );
 }
 
-// ── Email Capture Component ───────────────────────────────────────────────────
+// ── Email Capture ─────────────────────────────────────────────────────────────
 
 function EmailCapture() {
   const [email, setEmail] = useState("");
@@ -102,18 +103,18 @@ function EmailCapture() {
 
   if (status === "success") {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+      <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-2xl p-6 text-center">
         <div className="text-2xl mb-2">🎉</div>
-        <p className="text-green-700 font-semibold text-sm">You're on the list!</p>
-        <p className="text-green-600 text-xs mt-1">We'll notify you when new features launch.</p>
+        <p className="text-green-700 dark:text-green-300 font-semibold text-sm">You're on the list!</p>
+        <p className="text-green-600 dark:text-green-400 text-xs mt-1">We'll notify you when new features launch.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
-      <h3 className="text-sm font-bold text-blue-900 mb-1">Stay in the loop 📬</h3>
-      <p className="text-xs text-blue-700 mb-4">
+    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-800 rounded-2xl p-6">
+      <h3 className="text-sm font-bold text-blue-900 dark:text-blue-200 mb-1">Stay in the loop 📬</h3>
+      <p className="text-xs text-blue-700 dark:text-blue-400 mb-4">
         Get notified when we launch AI internship search, application tracking, and more.
       </p>
       <div className="flex gap-2">
@@ -123,7 +124,7 @@ function EmailCapture() {
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           placeholder="your@email.com"
-          className="flex-1 border border-blue-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          className="flex-1 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
         />
         <button
           onClick={handleSubmit}
@@ -133,10 +134,23 @@ function EmailCapture() {
           {status === "loading" ? "..." : "Notify me"}
         </button>
       </div>
-      {errorMsg && (
-        <p className="text-red-500 text-xs mt-2">{errorMsg}</p>
-      )}
+      {errorMsg && <p className="text-red-500 text-xs mt-2">{errorMsg}</p>}
     </div>
+  );
+}
+
+// ── Dark Mode Toggle ──────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors text-xl"
+      aria-label="Toggle dark mode"
+    >
+      {theme === "dark" ? "☀️" : "🌙"}
+    </button>
   );
 }
 
@@ -158,22 +172,17 @@ export default function Home() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setFileLoading(true);
     setFileName(file.name);
     setError("");
-
     try {
       const formData = new FormData();
       formData.append("file", file);
-
       const res = await fetch("/api/parse-resume", {
         method: "POST",
         body: formData,
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || "Failed to read file.");
         setFileName("");
@@ -196,7 +205,6 @@ export default function Home() {
     setError("");
     setLoading(true);
     setResult(null);
-
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -231,44 +239,46 @@ export default function Home() {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-gray-50 font-sans">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-900 font-sans transition-colors">
+      <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm font-bold">
             IF
           </div>
           <div>
-            <span className="font-bold text-gray-900 text-lg">InternshipFit</span>
+            <span className="font-bold text-gray-900 dark:text-white text-lg">InternshipFit</span>
             <span className="font-bold text-blue-600 text-lg"> AI</span>
           </div>
-          <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-            Beta
-          </span>
+          <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-1 rounded-full">
+              Beta
+            </span>
+          </div>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
         {!result && (
           <div className="text-center space-y-2 pb-2">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Get the internship you deserve.
             </h1>
-            <p className="text-gray-500 text-base max-w-md mx-auto">
+            <p className="text-gray-500 dark:text-slate-400 text-base max-w-md mx-auto">
               Paste your resume and a job description. Get a match score,
-              targeted improvements, a cover letter, and interview prep — in
-              seconds.
+              targeted improvements, a cover letter, and interview prep — in seconds.
             </p>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
               Your Resume
             </label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer text-sm text-blue-600 hover:text-blue-700 font-medium w-fit">
-                <span className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 hover:bg-blue-100 transition-colors">
+                <span className="bg-blue-50 dark:bg-blue-900 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors">
                   {fileLoading ? "Reading file..." : fileName ? `✓ ${fileName}` : "📄 Upload PDF, DOCX, or TXT"}
                 </span>
                 <input
@@ -284,17 +294,17 @@ export default function Home() {
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
                   placeholder="…or paste your resume text here"
-                  className="w-full border border-gray-200 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-300"
+                  className="w-full border border-gray-200 dark:border-slate-600 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-slate-200 placeholder-gray-300 dark:placeholder-slate-500 bg-white dark:bg-slate-700"
                 />
               )}
               {fileName && resumeText && (
-                <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-                  <span className="text-sm text-green-700">
+                <div className="flex items-center justify-between bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-800 rounded-xl px-4 py-3">
+                  <span className="text-sm text-green-700 dark:text-green-300">
                     ✓ Resume loaded — {resumeText.split(" ").length} words extracted
                   </span>
                   <button
                     onClick={() => { setFileName(""); setResumeText(""); }}
-                    className="text-xs text-gray-400 hover:text-gray-600"
+                    className="text-xs text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                   >
                     Remove
                   </button>
@@ -304,19 +314,19 @@ export default function Home() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">
               Internship Description
             </label>
             <textarea
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               placeholder="Paste the full internship job description here…"
-              className="w-full border border-gray-200 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 placeholder-gray-300"
+              className="w-full border border-gray-200 dark:border-slate-600 rounded-xl p-3 h-40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-slate-200 placeholder-gray-300 dark:placeholder-slate-500 bg-white dark:bg-slate-700"
             />
           </div>
 
           {error && (
-            <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-lg px-4 py-2">
+            <p className="text-red-500 text-sm bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-800 rounded-lg px-4 py-2">
               {error}
             </p>
           )}
@@ -333,7 +343,7 @@ export default function Home() {
         {loading && (
           <div className="text-center py-12 space-y-3">
             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 dark:text-slate-400 text-sm">
               Reviewing your resume against the role…
             </p>
           </div>
@@ -342,36 +352,28 @@ export default function Home() {
         {result && (
           <div className="space-y-6">
             <div className={`rounded-2xl border-2 p-6 text-center ${scoreBg(result.matchScore)}`}>
-              <div
-                className="text-6xl font-black mb-1"
-                style={{ color: scoreColor(result.matchScore) }}
-              >
-                {result.matchScore}
-                <span className="text-3xl">%</span>
+              <div className="text-6xl font-black mb-1" style={{ color: scoreColor(result.matchScore) }}>
+                {result.matchScore}<span className="text-3xl">%</span>
               </div>
-              <div
-                className="text-lg font-bold mb-3"
-                style={{ color: scoreColor(result.matchScore) }}
-              >
+              <div className="text-lg font-bold mb-3" style={{ color: scoreColor(result.matchScore) }}>
                 {result.scoreLabel}
               </div>
-              <p className="text-gray-600 text-sm max-w-lg mx-auto">
+              <p className="text-gray-600 dark:text-slate-300 text-sm max-w-lg mx-auto">
                 {result.summary}
               </p>
             </div>
 
-            {/* Email Capture — shown right after score */}
             <EmailCapture />
 
-            <div className="flex overflow-x-auto gap-1 bg-gray-100 p-1 rounded-xl">
+            <div className="flex overflow-x-auto gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 min-w-fit text-xs font-semibold py-2 px-3 rounded-lg transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "bg-white dark:bg-slate-700 text-blue-600 shadow-sm"
+                      : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
                   }`}
                 >
                   {tab.label}
@@ -384,9 +386,8 @@ export default function Home() {
                 <Section title="Strengths" icon="✅">
                   <ul className="space-y-2">
                     {result.strengths.map((s, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-gray-700">
-                        <span className="text-green-500 mt-0.5 flex-shrink-0">▸</span>
-                        {s}
+                      <li key={i} className="flex gap-2 text-sm text-gray-700 dark:text-slate-300">
+                        <span className="text-green-500 mt-0.5 flex-shrink-0">▸</span>{s}
                       </li>
                     ))}
                   </ul>
@@ -394,9 +395,8 @@ export default function Home() {
                 <Section title="Weaknesses" icon="⚠️">
                   <ul className="space-y-2">
                     {result.weaknesses.map((w, i) => (
-                      <li key={i} className="flex gap-2 text-sm text-gray-700">
-                        <span className="text-amber-500 mt-0.5 flex-shrink-0">▸</span>
-                        {w}
+                      <li key={i} className="flex gap-2 text-sm text-gray-700 dark:text-slate-300">
+                        <span className="text-amber-500 mt-0.5 flex-shrink-0">▸</span>{w}
                       </li>
                     ))}
                   </ul>
@@ -415,9 +415,8 @@ export default function Home() {
               <Section title="Resume Improvements" icon="📝">
                 <ol className="space-y-3">
                   {result.resumeImprovements.map((tip, i) => (
-                    <li key={i} className="flex gap-3 text-sm text-gray-700">
-                      <span className="text-blue-500 font-bold flex-shrink-0">{i + 1}.</span>
-                      {tip}
+                    <li key={i} className="flex gap-3 text-sm text-gray-700 dark:text-slate-300">
+                      <span className="text-blue-500 font-bold flex-shrink-0">{i + 1}.</span>{tip}
                     </li>
                   ))}
                 </ol>
@@ -429,11 +428,11 @@ export default function Home() {
                 <div className="space-y-3">
                   <button
                     onClick={handleCopy}
-                    className="text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-900 border border-blue-100 dark:border-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
                   >
                     {copied ? "✓ Copied!" : "Copy to clipboard"}
                   </button>
-                  <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-xl border border-gray-100 p-5">
+                  <div className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-slate-700 rounded-xl border border-gray-100 dark:border-slate-600 p-5">
                     {result.coverLetter}
                   </div>
                 </div>
@@ -444,9 +443,9 @@ export default function Home() {
               <Section title="Likely Interview Questions" icon="🎤">
                 <div className="space-y-4">
                   {result.interviewQuestions.map((iq, i) => (
-                    <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-1">
-                      <p className="text-sm font-semibold text-gray-800">Q{i + 1}: {iq.question}</p>
-                      <p className="text-xs text-gray-500 leading-relaxed">💡 {iq.tip}</p>
+                    <div key={i} className="border border-gray-100 dark:border-slate-600 rounded-xl p-4 space-y-1">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">Q{i + 1}: {iq.question}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">💡 {iq.tip}</p>
                     </div>
                   ))}
                 </div>
@@ -461,7 +460,7 @@ export default function Home() {
                       <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                         {i + 1}
                       </span>
-                      <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
+                      <p className="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">{step}</p>
                     </li>
                   ))}
                 </ol>
@@ -470,14 +469,14 @@ export default function Home() {
 
             <button
               onClick={() => { setResult(null); setError(""); }}
-              className="w-full text-sm text-gray-400 hover:text-gray-600 py-2 transition-colors"
+              className="w-full text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 py-2 transition-colors"
             >
               ← Analyze a different application
             </button>
           </div>
         )}
 
-        <footer className="text-center text-xs text-gray-300 pt-4 pb-8">
+        <footer className="text-center text-xs text-gray-300 dark:text-slate-600 pt-4 pb-8">
           InternshipFit AI · Built for college students · Beta
         </footer>
       </div>
