@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -81,7 +81,6 @@ function EmailCapture() {
     if (!email.trim()) return;
     setStatus("loading");
     setErrorMsg("");
-
     try {
       const res = await fetch("/api/subscribe", {
         method: "POST",
@@ -168,6 +167,14 @@ export default function Home() {
   >("overview");
   const [copied, setCopied] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [analysisCount, setAnalysisCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/counter")
+      .then((r) => r.json())
+      .then((d) => setAnalysisCount(d.count))
+      .catch(() => {});
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,17 +185,10 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/parse-resume", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/parse-resume", { method: "POST", body: formData });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to read file.");
-        setFileName("");
-      } else {
-        setResumeText(data.text);
-      }
+      if (!res.ok) { setError(data.error || "Failed to read file."); setFileName(""); }
+      else setResumeText(data.text);
     } catch {
       setError("Failed to read file. Try pasting your resume text instead.");
       setFileName("");
@@ -213,6 +213,13 @@ export default function Home() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed.");
+
+      // Increment counter
+      fetch("/api/counter", { method: "POST" })
+        .then((r) => r.json())
+        .then((d) => setAnalysisCount(d.count))
+        .catch(() => {});
+
       setResult(data);
       setActiveTab("overview");
     } catch (err: unknown) {
@@ -260,7 +267,7 @@ export default function Home() {
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
         {!result && (
-          <div className="text-center space-y-2 pb-2">
+          <div className="text-center space-y-3 pb-2">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Get the internship you deserve.
             </h1>
@@ -268,6 +275,11 @@ export default function Home() {
               Paste your resume and a job description. Get a match score,
               targeted improvements, a cover letter, and interview prep — in seconds.
             </p>
+            {analysisCount !== null && analysisCount > 0 && (
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                🎓 {analysisCount.toLocaleString()} resume{analysisCount === 1 ? "" : "s"} analyzed so far
+              </p>
+            )}
           </div>
         )}
 
